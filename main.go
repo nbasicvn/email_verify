@@ -23,7 +23,8 @@ func main() {
 	configuration, _ := truemail.NewConfiguration(
 		truemail.ConfigurationAttr{
 			VerifierEmail: "verifier@htpland.com",
-			SmtpFailFast:  true,
+			SmtpFailFast:  false,
+			SmtpSafeCheck: true,
 		},
 	)
 
