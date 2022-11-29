@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/truemail-rb/truemail-go"
 	"log"
 	"net/mail"
@@ -31,7 +30,6 @@ func main() {
 	r := gin.Default()
 	r.GET("/email/verify/:email", func(c *gin.Context) {
 		email := c.Param("email")
-		fmt.Println(email)
 		if !isValidEmailAddress(email) {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "error",
