@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/truemail-rb/truemail-go"
+	"fmt"
 	"log"
 	"net/mail"
 	"os"
@@ -9,6 +9,16 @@ import (
 import "github.com/gin-gonic/gin"
 import "net/http"
 import "github.com/joho/godotenv"
+import emailverifier "github.com/AfterShip/email-verifier"
+
+var (
+	verifier = emailverifier.
+		NewVerifier().
+		EnableSMTPCheck().
+		EnableCatchAllCheck().
+		EnableGravatarCheck().
+		EnableAutoUpdateDisposable()
+)
 
 func main() {
 	err := godotenv.Load(".env")
@@ -20,14 +30,6 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	configuration, _ := truemail.NewConfiguration(
-		truemail.ConfigurationAttr{
-			VerifierEmail: "verifier@htpland.com",
-			SmtpFailFast:  false,
-			SmtpSafeCheck: true,
-		},
-	)
-
 	r := gin.Default()
 	r.GET("/email/verify/:email", func(c *gin.Context) {
 		email := c.Param("email")
@@ -38,11 +40,28 @@ func main() {
 			})
 			return
 		}
-		status := truemail.IsValid(email, configuration)
+		ret, err := verifier.Verify(email)
+		if err != nil {
+			fmt.Println("verify email address failed, error is: ", err)
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "error",
+				"message": "Verify email address failed",
+			})
+			return
+		}
+		if !ret.Syntax.Valid {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "error",
+				"message": "Email address invalid",
+			})
+			return
+		}
+		fmt.Println(ret)
 		c.JSON(http.StatusOK, gin.H{
 			"status": "success",
 			"data": gin.H{
-				"status": status,
+				"status": ret.Reachable != "no",
+				"info":   ret,
 			},
 		})
 	})
